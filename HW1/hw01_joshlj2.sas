@@ -30,6 +30,7 @@ run;
 
 PROC PRINT DATA=sashelp.shoes;
 	where subsidiary='Singapore';
+	var subsidiary product stores sales inventory returns;
 run;
 
 PROC MEANS DATA=sashelp.shoes sum mean min max;
