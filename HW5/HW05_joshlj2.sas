@@ -63,7 +63,6 @@ run;
 
 data hw5.top_buyers_joshlj2(KEEP=Customer_ID
 						   		 Customer_Name
-						         Order_Type
 						         TotSales);
 	 set hw5.orders;
 	 
@@ -79,23 +78,90 @@ data hw5.top_buyers_joshlj2(KEEP=Customer_ID
 run;
 
 /*1b*/
-proc print data=hw5.discount_ret; run;
+proc print data=hw5.discount_ret; 
+	title "Customers who spent > $400 on retail purchases";
+run;
 
-proc print data=hw5.discount_int; run;
+proc print data=hw5.discount_int; 
+	title "Customers who spent > $400 on internet purchases";
+run;
 
-proc print data=hw5.discount_cat; run;
+proc print data=hw5.discount_cat; 
+	title "Customers who spent > $100 on catalog purchases";
+run;
 
-proc print data=hw5.top_buyers_joshlj2; run;
+proc print data=hw5.top_buyers_joshlj2; 
+	title "Customers who spent > $600 across all platforms";
+run;
 
 /*2a*/
-
 data hw5.trade_joshlj2;
 	 
 	 infile "/folders/myfolders/HW5/importexport87-15.dat" dlm = '09'x;
 	 
-	 input Date :MMDDYY10. TotExports :8. TotImports :8. @;
+	 input Date :MMDDYY10. TotExports :8. TotImports :8. @@;
 	 
-	 format Date MMDDYY10.;
+	 Balance = TotExports - TotImports;
 	 
+	 format Date MMDDYY10.
+	 		TotExports DOLLAR12.2
+	 		TotImports DOLLAR12.2
+	 		Balance DOLLAR12.2;
 run;
 
+/*2b*/
+proc print data=hw5.trade_joshlj2;
+	where Date between '01JAN2011'd and '31DEC2011'd;
+run;
+
+/*2c*/
+proc sort data=hw5.trade_joshlj2;
+	by Date;
+run;
+
+data hw5.yearlyimports_joshlj2(KEEP=Year
+									YearTotal
+									YearAvg);
+	
+	set hw5.trade_joshlj2;
+	by Date;
+	
+	Year = year(Date);
+	Month = month(Date);
+
+	if Month=1 then do;
+		YearTotal = 0;
+		TotalMonths = 0;
+	end;
+	
+	YearTotal + TotImports;
+	TotalMonths + 1;
+	
+	if Month=12;
+	YearAvg = YearTotal / TotalMonths;
+	
+run;
+
+/*2d*/
+proc contents data=hw5.yearlyimports_joshlj2;
+	ods select attributes variables;
+run;
+
+/*2e*/
+proc print data=hw5.yearlyimports_joshlj2;
+	where Year between 2000 and 2004;
+run;
+
+/*2f*/
+proc format;
+	value decades 1980-1989 = "1980s"
+				  1990-1999 = "1990s"
+				  2000-2009 = "2000s"
+				  2010-2019 = "2010s";
+run;
+
+proc means data=hw5.yearlyimports_joshlj2 mean median;
+	class Year;
+	var YearAvg;
+	format Year decades.;
+run;
